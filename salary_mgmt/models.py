@@ -6,3 +6,6 @@ class EmployeeSalary(models.Model):
     login = models.CharField(max_length=24)
     name = models.CharField(max_length=100)
     salary = models.FloatField()
+
+    class Meta:
+        ordering = ['id', 'name', 'login', 'salary']
