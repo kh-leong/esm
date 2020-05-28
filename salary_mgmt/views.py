@@ -6,6 +6,10 @@ from rest_framework import viewsets, permissions
 from salary_mgmt.serializers import EmployeeSalarySerializer
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+
+from .utils import *
 
 # Create your views here.
 def user_index(request):
@@ -22,32 +26,36 @@ def user_detail(request, primary_key):
     }
     return render(request, 'user_index.html', context)
 
+@api_view(['GET',])
 def get_user(request):
     if request.method != "GET":
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return HttpResponse(status=400)
 
     minSalary = request.GET.get('minSalary', '')
     # check if minSalary is float.
-    if not minSalary.replace('.', '', 1).isnumeric():
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    
+    if not isFloat(minSalary):
+        return HttpResponse(status=400)
+
     maxSalary = request.GET.get('maxSalary', '')
     # check if maxSalary is float
-    if not maxSalary.replace('.', '', 1).isnumeric():
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    
+    if not isFloat(maxSalary):
+        return HttpResponse(status=400)
+
     offset = request.GET.get('offset', '0')
     if not offset.isnumeric():
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return HttpResponse(status=400)
     offset = int(offset)
     limit = 30
 
     # sort order columns are id, name, login, salary
-    sort = request.GET.get('sort', 'abc')
-    if len(sort) <2:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    sort = request.GET.get('sort', ' salary')
+    if not isValidSort(sort):
+        return HttpResponse(status=400)
 
     entries = EmployeeSalary.objects.filter(salary__gte=minSalary)
-    entries = entries.filter(salary__lte=maxSalary).order_by('-salary')[offset:offset+limit]
+    entries = entries.filter(salary__lte=maxSalary)
+    if not isSortAscending(sort):
+        entries = entries.order_by(sort)
+    entries = entries[offset:offset+limit]
     serializer = EmployeeSalarySerializer(entries, many=True)
     return JsonResponse({'results': serializer.data}, safe=False)
