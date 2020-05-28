@@ -9,7 +9,26 @@
         <!--Let browser know website is optimized for mobile-->
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     </head>
-<h1>Hello</h1>
+<div>
+    <h4>Upload</h4>
+<form id="upload-form">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="name" class="col-md-3 col-sm-3 col-xs-12 control-label">File: </label>
+        <div class="col-md-8">
+            <input type="file" name="file" id="file" required="True" class="form-control">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-3 col-sm-3 col-xs-12 col-md-offset-3" style="margin-bottom:10px;">
+            <button class="btn btn-primary"> <span class="glyphicon glyphicon-upload"
+                    style="margin-right:5px;"></span>Upload </button>
+        </div>
+    </div>
+</form>
+</div>
+
+<h4>Query parameters</h4>
 <div>
     <h5></h5>
     <form id="query-form">
@@ -63,7 +82,7 @@
         {% block javascript %}
         <script>
             /*
-                On submiting the form, send the POST ajax
+                On submiting the form, send the GET ajax
                 request to server and after successfull submission
                 display the object.
             */
@@ -103,6 +122,54 @@
                     }
                 })
             })
+
+            $("#upload-form").submit(function(e) {
+                // preventing from page reload and default actions
+                e.preventDefault();
+                // serialize the data for sending the form data.
+                var uploadFile = $('#file')                
+                console.log(uploadFile)
+                var formData = new FormData();
+                formData.append('file', uploadFile[0].files[0]);
+
+                console.log(formData);
+                console.log(uploadFile[0].files[0])
+                var csrftoken = getCookie('csrftoken');
+
+                // make POST ajax call
+                $.ajax({
+                    type: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken },
+                    url: "users/upload",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        alert("File upload success!")
+                    },
+                    error: function (response) {
+                        console.log(response)
+                        // alert the error if any error occured
+                        alert("File upload failed");
+                    }
+                })
+            })
+
+            function getCookie(name) {
+                    var cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        var cookies = document.cookie.split(';');
+                        for (var i = 0; i < cookies.length; i++) {
+                            var cookie = cookies[i].trim();
+                            // Does this cookie string begin with the name we want?
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
         </script>
         {% endblock javascript %}
 

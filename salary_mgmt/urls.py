@@ -12,4 +12,5 @@ urlpatterns = [
     path('', views.user_index, name='user_index'),
     path('users/', views.get_user, name='user_index'),   
     path('<int:pk>/', views.user_detail, name='user_detail'),
+    path('users/upload', views.upload_csv, name='user_index'),
 ]

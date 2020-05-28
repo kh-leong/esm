@@ -11,6 +11,8 @@ from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 
 from .utils import *
 import logging
+from django.views.decorators.csrf import csrf_protect
+import json
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -19,7 +21,9 @@ logger = logging.getLogger(__name__)
 def user_index(request):
     entries = EmployeeSalary.objects.all()
     context = {
-        'entries': entries
+        'entries': entries,
+        'count': entries.count(),
+        'page': 1,
     }
     return render(request, 'user_index.html', context)
 
@@ -62,6 +66,30 @@ def get_user(request):
     entries = entries.filter(salary__lte=maxSalary)
     if not isSortAscending(sort):
         entries = entries.order_by(sort)
+    count = entries.count()
     entries = entries[offset:offset+limit]
     serializer = EmployeeSalarySerializer(entries, many=True)
-    return JsonResponse({'results': serializer.data}, safe=False)
+    return JsonResponse({'results': serializer.data, 'count': count}, safe=False)
+
+
+@csrf_protect
+def upload_csv(request):
+    logger.error(request.FILES)
+
+    if request.method != 'POST':
+        return HttpResponse(status=400)
+    try:
+        csv = request.FILES['file']
+        if not csv.name.endswith('.csv'):
+            return HttpResponse('File is not csv', status=400)
+        # todo: replace with function to handle
+        data = csv.read().decode('utf-8')
+        lines = data.split("\n")
+        lines = lines[1:]
+        for line in lines:
+            logger.error(line[0])
+        return HttpResponse(status=200)
+    except Exception as e:
+        logger.error('Unable to upload file.')
+        logger.error(print(e))
+        return HttpResponse(status=400)
