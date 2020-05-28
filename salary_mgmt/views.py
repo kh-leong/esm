@@ -48,7 +48,9 @@ def get_user(request):
     limit = 30
 
     # sort order columns are id, name, login, salary
-    sort = request.GET.get('sort', ' salary')
+    sort = request.GET.get('sort', '+salary')
+    if isParamEncoded(sort):
+        sort = decodeParam(sort)
     if not isValidSort(sort):
         return HttpResponse(status=400)
 

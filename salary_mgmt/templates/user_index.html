@@ -2,15 +2,40 @@
 {% load staticfiles %}
 
 <html>
-        <head>
-            <!--Import materialize.css-->
-            <link type="text/css" rel="stylesheet" href="{% static '/materialize-css/dist/css/materialize.min.css' %}" media="screen,projection" />
+    <head>
+        <!--Import materialize.css-->
+        <link type="text/css" rel="stylesheet" href="{% static '/materialize-css/dist/css/materialize.min.css' %}" media="screen,projection" />
         
-            <!--Let browser know website is optimized for mobile-->
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        </head>
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
 <h1>Hello</h1>
-<table>
+<div>
+    <h5></h5>
+    <form id="query-form">
+        <div class="row">
+            <div class="form-group col-4">
+                <label class="col-12">minSalary</label>
+                <input type="number" step="any" name="minSalary" required="" class="form-control" id="minSalary">
+            </div>
+            <div class="form-group col-4">
+                <label class="col-12">maxSalary</label>
+                <input type="number" step="any" name="maxSalary" required="" class="form-control" id="maxSalary">
+            </div>
+            <div class="form-group col-4">
+                <label class="col-12">offset</label>
+                <input type="number" name="offset" required="" class="form-control" id="offset">
+            </div>
+            <div class="form-group col-4">
+                <label class="col-12">sort</label>
+                <input type="text" name="sort" required="" class="form-control" id="sort">
+            </div>
+            <input type="submit" class="btn btn-primary" value="Search" />
+        </div>
+    </form>
+</div>
+
+<table id="employee_salary">
     <thead>
         <tr>
             <th>Employee ID</th>
@@ -34,5 +59,52 @@
     <body>
         <!--JavaScript at end of body for optimized loading-->
         <script type="text/javascript" src="{% static '/materialize-css/dist/js/materialize.min.js' %}"></script>
+        <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+        {% block javascript %}
+        <script>
+            /*
+                On submiting the form, send the POST ajax
+                request to server and after successfull submission
+                display the object.
+            */
+            $("#query-form").submit(function (e) {
+                // preventing from page reload and default actions
+                e.preventDefault();
+                // serialize the data for sending the form data.
+                var serializedData = $(this).serialize();
+                // make GET ajax call
+                $.ajax({
+                    type: 'GET',
+                    url: "users",
+                    data: serializedData,
+                    success: function (response) {
+
+                        console.log(response)
+                        console.log(response["results"])
+
+                        $("#employee_salary tbody").empty()
+                        results = response["results"]
+                        results.forEach(element => {
+                            console.log(element)
+                            $("#employee_salary tbody").append(
+                                `<tr>
+                                    <td>${element["id"] || ""}</td>
+                                    <td>${element["login"] || ""}</td>
+                                    <td>${element["name"] || ""}</td>
+                                    <td>${element["salary"] || ""}</td>
+                                </tr>`
+                            )
+                        })
+                    },
+                    error: function (response) {
+                        console.log(response)
+                        // alert the error if any error occured
+                        alert("Invalid param");
+                    }
+                })
+            })
+        </script>
+        {% endblock javascript %}
+
     </body>
 </html>
