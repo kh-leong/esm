@@ -82,12 +82,11 @@ def upload_csv(request):
         csv = request.FILES['file']
         if not csv.name.endswith('.csv'):
             return HttpResponse('File is not csv', status=400)
-        # todo: replace with function to handle
-        data = csv.read().decode('utf-8')
-        lines = data.split("\n")
-        lines = lines[1:]
-        for line in lines:
-            logger.error(line[0])
+
+        success = handleUploadedCsv(csv)
+        if not success:
+            return HttpResponse('Could not update DB', status=400)
+        
         return HttpResponse(status=200)
     except Exception as e:
         logger.error('Unable to upload file.')

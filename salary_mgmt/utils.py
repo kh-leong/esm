@@ -1,5 +1,10 @@
 import urllib.parse
 from django.db import transaction
+from .models import EmployeeSalary
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 def isFloat(salary):
     return salary.replace('.', '', 1).isnumeric()
@@ -34,17 +39,35 @@ def handleUploadedCsv(csv):
     data = csv.read().decode('utf-8')
     lines = data.split("\n")
     # ignore first line
-    datalines = lines[1:]
+    dataLines = lines[1:]
     try:
         with transaction.atomic():
-            for line in datalines:
+            for line in dataLines:
                 # ignore comments
                 if line[0] == '#':
                     continue
                 # save to db
-                rowdata = line.split()
-                
-                print(line)
-    except Exception:
+                rowData = line.split(',')
+                if len(rowData) != 4:
+                    raise ValueError('Incorrect number of columns')
+                csvId = rowData[0]
+                csvLogin = rowData[1]
+                csvName = rowData[2]
+                csvSalary = float(rowData[3])
+                if csvSalary <= 0:
+                    raise ValueError('Salary cannot be negative')
+                # 
+                EmployeeSalary.objects.update_or_create(
+                    id=csvId, login=csvLogin,
+                    defaults = {
+                        'id': csvId,
+                        'login': csvLogin,
+                        'name':csvName,
+                        'salary': csvSalary
+                    }
+                )
+    except Exception as e:
+        logger.error("Could not save")
+        logger.error("Error: " + str(e))
         return False
     return True
