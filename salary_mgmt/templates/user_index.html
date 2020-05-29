@@ -64,16 +64,11 @@
         </tr>
     </thead>
     <tbody>
-        {% for EmployeeSalary in entries %}
-        <tr>
-            <td>{{EmployeeSalary.id}}</td>
-            <td>{{EmployeeSalary.login}}</td>
-            <td>{{EmployeeSalary.name}}</td>
-            <td>{{EmployeeSalary.salary}}</td>
-        </tr>
-        {% endfor %}
     </tbody>
 </table>
+
+<div id="page-buttons">
+</div>
 
     <body>
         <!--JavaScript at end of body for optimized loading-->
@@ -91,6 +86,9 @@
                 e.preventDefault();
                 // serialize the data for sending the form data.
                 var serializedData = $(this).serialize();
+                console.log(this)
+                console.log("Serialized data")
+                console.log(serializedData)
                 // make GET ajax call
                 $.ajax({
                     type: 'GET',
@@ -114,6 +112,8 @@
                                 </tr>`
                             )
                         })
+                        $("#page-buttons").empty();
+                        loadPageButtons(response)
                     },
                     error: function (response) {
                         console.log(response)
@@ -126,7 +126,6 @@
             $("#upload-form").submit(function(e) {
                 // preventing from page reload and default actions
                 e.preventDefault();
-                // serialize the data for sending the form data.
                 var uploadFile = $('#file')                
                 console.log(uploadFile)
                 var formData = new FormData();
@@ -156,20 +155,119 @@
             })
 
             function getCookie(name) {
-                    var cookieValue = null;
-                    if (document.cookie && document.cookie !== '') {
-                        var cookies = document.cookie.split(';');
-                        for (var i = 0; i < cookies.length; i++) {
-                            var cookie = cookies[i].trim();
-                            // Does this cookie string begin with the name we want?
-                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                break;
-                            }
+                var cookieValue = null
+                if (document.cookie && document.cookie !== '') {
+                    var cookies = document.cookie.split(';')
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = cookies[i].trim()
+                        // Does this cookie string begin with the name we want?
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+                            break
                         }
                     }
-                    return cookieValue;
                 }
+                return cookieValue
+            }
+
+            $(document).on('click', '.pagebutton', function () {
+            // $(".pagebutton").click(function () {
+                console.log("TEST")
+                var buttonName = this.name
+                var currentMinSalary = $('#minSalary').val()
+                var currentMaxSalary = $('#maxSalary').val()
+                var currentOffset = $('#offset').val()
+                var currentSort = $('#sort').val()
+                var newOffset = parseInt(currentOffset)
+                switch (buttonName) {
+                    case "next":
+                        newOffset+=30
+                        break
+                    case "prev":
+                        newOffset-=30
+                        break
+                    case "page":
+                        newOffset=(this.value-1)*30
+                        break
+                    default:
+                        break
+                }
+                const params = new URLSearchParams({
+                    minSalary: currentMinSalary,
+                    maxSalary: currentMaxSalary,
+                    offset: newOffset.toString(),
+                    sort: currentSort,
+                })
+                console.log(params.toString())
+                $.ajax({
+                    type: 'GET',
+                    url: "users",
+                    data: params.toString(),
+                    success: function (response) {
+
+                        console.log(response)
+                        console.log(response["results"])
+
+                        $("#employee_salary tbody").empty()
+                        results = response["results"]
+                        results.forEach(element => {
+                            console.log(element)
+                            $("#employee_salary tbody").append(
+                                `<tr>
+                                    <td>${element["id"] || ""}</td>
+                                    <td>${element["login"] || ""}</td>
+                                    <td>${element["name"] || ""}</td>
+                                    <td>${element["salary"] || ""}</td>
+                                </tr>`
+                            )
+                        })
+
+                        $('#offset').val(newOffset)
+                        $("#page-buttons").empty()
+                        loadPageButtons(response)
+
+                    },
+                    error: function (response) {
+                        console.log(response)
+                        // alert the error if any error occured
+                        alert("Invalid param");
+                    }
+                })
+
+            })
+
+            function loadPageButtons(response) {
+                console.log(response)
+                var count = response["count"]
+                var pages = response["pages"]
+                var current_page = response["current_page"]
+                var page_range = response["page_range"]
+                var html = ``
+                console.log("Current page: " + current_page)
+            
+                if (pages > 1) {
+                    if (current_page == 1) {
+                        html += `<button class="pagebutton" name="prev" disabled>&laquo;</button>`
+                    } else {
+                        html += `<button class="pagebutton" name="prev">&laquo;</button>`
+                    }
+                    for (const page of page_range) {
+                        if (page == current_page) {
+                            html += `<button class="pagebutton" name="page" value=${page} disabled>${page}</button>`
+                        } else {
+                            html += `<button class="pagebutton" name="page" value=${page}>${page}</button>`
+                        }
+                    }
+                    if (current_page >= pages) {
+                        html += `<button class="pagebutton" name="next" disabled>&raquo;</button>`
+                    } else {
+                        html += `<button class="pagebutton" name="next">&raquo;</button>`
+                    }
+                }
+                $("#page-buttons").append(html)
+            
+            }
+
         </script>
         {% endblock javascript %}
 

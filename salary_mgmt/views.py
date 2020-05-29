@@ -20,10 +20,16 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 def user_index(request):
     entries = EmployeeSalary.objects.all()
+    count = entries.count()
+    pages = int(count/30)
+    if count % 30 > 0:
+        pages += 1
     context = {
-        'entries': entries,
+        'entries': entries[:30],
         'count': entries.count(),
-        'page': 1,
+        'current_page': 1,
+        'pages': pages,
+        'page_range': range(1,pages+1),
     }
     return render(request, 'user_index.html', context)
 
@@ -67,9 +73,23 @@ def get_user(request):
     if not isSortAscending(sort):
         entries = entries.order_by(sort)
     count = entries.count()
+    pages = int(count/30)
+    if count % 30 > 0:
+        pages += 1
     entries = entries[offset:offset+limit]
     serializer = EmployeeSalarySerializer(entries, many=True)
-    return JsonResponse({'results': serializer.data, 'count': count}, safe=False)
+    page_range = list(range(1, pages+1))
+    current_page = int(offset/limit)+1
+    if current_page > pages:
+        current_page = pages
+    return JsonResponse(
+        {
+            'results': serializer.data,
+            'count': count,
+            'pages': pages,
+            'current_page': current_page,
+            'page_range': page_range,
+        }, safe=False)
 
 
 @csrf_protect
