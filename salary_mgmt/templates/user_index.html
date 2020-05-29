@@ -86,9 +86,6 @@
                 e.preventDefault();
                 // serialize the data for sending the form data.
                 var serializedData = $(this).serialize();
-                console.log(this)
-                console.log("Serialized data")
-                console.log(serializedData)
                 // make GET ajax call
                 $.ajax({
                     type: 'GET',
@@ -96,13 +93,10 @@
                     data: serializedData,
                     success: function (response) {
 
-                        console.log(response)
-                        console.log(response["results"])
 
                         $("#employee_salary tbody").empty()
                         results = response["results"]
                         results.forEach(element => {
-                            console.log(element)
                             $("#employee_salary tbody").append(
                                 `<tr>
                                     <td>${element["id"] || ""}</td>
@@ -127,12 +121,9 @@
                 // preventing from page reload and default actions
                 e.preventDefault();
                 var uploadFile = $('#file')                
-                console.log(uploadFile)
                 var formData = new FormData();
                 formData.append('file', uploadFile[0].files[0]);
 
-                console.log(formData);
-                console.log(uploadFile[0].files[0])
                 var csrftoken = getCookie('csrftoken');
 
                 // make POST ajax call
@@ -171,8 +162,6 @@
             }
 
             $(document).on('click', '.pagebutton', function () {
-            // $(".pagebutton").click(function () {
-                console.log("TEST")
                 var buttonName = this.name
                 var currentMinSalary = $('#minSalary').val()
                 var currentMaxSalary = $('#maxSalary').val()
@@ -198,20 +187,15 @@
                     offset: newOffset.toString(),
                     sort: currentSort,
                 })
-                console.log(params.toString())
                 $.ajax({
                     type: 'GET',
                     url: "users",
                     data: params.toString(),
                     success: function (response) {
 
-                        console.log(response)
-                        console.log(response["results"])
-
                         $("#employee_salary tbody").empty()
                         results = response["results"]
                         results.forEach(element => {
-                            console.log(element)
                             $("#employee_salary tbody").append(
                                 `<tr>
                                     <td>${element["id"] || ""}</td>
@@ -237,13 +221,11 @@
             })
 
             function loadPageButtons(response) {
-                console.log(response)
                 var count = response["count"]
                 var pages = response["pages"]
                 var current_page = response["current_page"]
                 var page_range = response["page_range"]
                 var html = ``
-                console.log("Current page: " + current_page)
             
                 if (pages > 1) {
                     if (current_page == 1) {

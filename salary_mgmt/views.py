@@ -2,13 +2,9 @@ from django.shortcuts import render
 from salary_mgmt.models import EmployeeSalary
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
-from rest_framework import viewsets, permissions
 from salary_mgmt.serializers import EmployeeSalarySerializer
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes
-from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
-
 from .utils import *
 import logging
 from django.views.decorators.csrf import csrf_protect
@@ -19,25 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Create your views here.
 def user_index(request):
-    entries = EmployeeSalary.objects.all()
-    count = entries.count()
-    pages = int(count/30)
-    if count % 30 > 0:
-        pages += 1
-    context = {
-        'entries': entries[:30],
-        'count': entries.count(),
-        'current_page': 1,
-        'pages': pages,
-        'page_range': range(1,pages+1),
-    }
-    return render(request, 'user_index.html', context)
-
-def user_detail(request, primary_key):
-    entries = EmployeeSalary.objects.get(pk = primary_key)
-    context = {
-        'entries': entries
-    }
+    context = {}
     return render(request, 'user_index.html', context)
 
 @api_view(['GET',])
@@ -68,13 +46,17 @@ def get_user(request):
     if not isValidSort(sort):
         return HttpResponse(status=400)
 
+    # filter salary >= minSalary
     entries = EmployeeSalary.objects.filter(salary__gte=minSalary)
+    # filter salary <= maxSalary
     entries = entries.filter(salary__lte=maxSalary)
+    # sort by descending
     if not isSortAscending(sort):
         entries = entries.order_by(sort)
+    
     count = entries.count()
     pages = int(count/30)
-    if count % 30 > 0:
+    if (count-offset) % 30 > 0:
         pages += 1
     entries = entries[offset:offset+limit]
     serializer = EmployeeSalarySerializer(entries, many=True)
@@ -94,8 +76,6 @@ def get_user(request):
 
 @csrf_protect
 def upload_csv(request):
-    logger.error(request.FILES)
-
     if request.method != 'POST':
         return HttpResponse(status=400)
     try:
